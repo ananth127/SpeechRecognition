@@ -16,7 +16,7 @@ const SpeechToText = () => {
   useEffect(() => {
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
-      recognition.continuous = !isMobileDevice(); // Mobile browsers may not support continuous mode
+      recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
 
@@ -40,9 +40,12 @@ const SpeechToText = () => {
       recognition.onend = () => {
         setRecognizing(false);
 
-        // On mobile, we don't auto-restart recognition
-        if (!isMobileDevice() && recognizing) {
-          recognition.start(); // Restart only on desktop
+        // On mobile, restart recognition automatically after a stop
+        if (isMobileDevice()) {
+          setTimeout(() => {
+            recognition.start();
+            setRecognizing(true);
+          }, 500);  // Restart after a 500ms delay to avoid rapid stop/start issues
         }
       };
 
@@ -56,10 +59,9 @@ const SpeechToText = () => {
         recognitionRef.current.stop();
       }
     };
-  }, [recognizing]);
+  }, []);
 
   const startRecognition = () => {
-    // Ensure microphone permissions are requested on mobile
     if (recognitionRef.current && !recognizing) {
       recognitionRef.current.start();
       setRecognizing(true);
